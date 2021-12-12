@@ -39,13 +39,7 @@ class Event(object):
         pass
 
 
-#群组对象
-class Group:
-    def __init__(self, platform, group, channel = None):
-        self.platform = platform
-        self.group = group
-        self.channel = channel
-        return
+
 
 def private_reply(plugin_event, Proc):
     #消息直插数据库
