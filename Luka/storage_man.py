@@ -12,29 +12,25 @@
 
 import sqlite3
 import os
-#
-data_file = "./plugin/data/Luka"
-msg_db = sqlite3.connect(data_file + '/storage.db', isolation_level=None, check_same_thread=False)
-#
+
 class sqliteOperation(object):
     def __init__(self):
         #链接数据库，真男人从不用游标
         self.db = msg_db
-        self.init_table()
         return
 
     def init_table(self):
         #获取所有表的名称
         all_table_get_sen = "SELECT name FROM sqlite_master WHERE type='table';"
         table_list = []
-        ori_table_list = self.db.execute(all_table_get_sen).fetchall()
+        ori_table_list = self.get_exec(all_table_get_sen,times = -1)
         #将所有表的名称转移到列表中
         for table_name in ori_table_list:
             table_list.append(table_name[0])
         #初始化新建表字典
         table_dict = {
             "IndePoint":"CREATE TABLE IndePoint (Groupid INT NOT NULL,Userid  INT NOT NULL,Point INT NOT NULL DEFAULT (0) );CREATE UNIQUE INDEX OnlyGroupPoint ON IndePoint (Groupid,Userid);",
-            "TimeLimit":""
+            "TimeLimit":"CREATE TABLE TimeLimit (Groupid INT NOT NULL,Userid  INT NOT NULL,Mark TEXT NOT NULL,Ts INT NOT NULL,Times INT NOT NULL DEFAULT (1));CREATE UNIQUE INDEX OnlyTimeLimit ON TimeLimit (Groupid,Userid,Mark);"
             }
         for table_name, create_sen in table_dict.items():
             #如果表名不存在在表列表中
@@ -64,9 +60,12 @@ class sqliteOperation(object):
         self.db.execute(sen, params)
         return
 
+
 if __name__ != "__main__":
     #创建数据目录
     data_file = "./plugin/data/Luka"
     if not os.path.exists(data_file):
         os.mkdir(data_file)
     msg_db = sqlite3.connect(data_file + '/storage.db', isolation_level=None, check_same_thread=False)
+    #手动初始化校对数据库模式
+    sqliteOperation().init_table()
