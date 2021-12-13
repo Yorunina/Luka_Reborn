@@ -29,9 +29,12 @@ class sqliteOperation(object):
             table_list.append(table_name[0])
         #初始化新建表字典
         table_dict = {
+            #存储群积分相关
             "IndePoint":"CREATE TABLE IndePoint (Groupid INT NOT NULL,Userid  INT NOT NULL,Point INT NOT NULL DEFAULT (0) );CREATE UNIQUE INDEX OnlyGroupPoint ON IndePoint (Groupid,Userid);",
-            "TimeLimit":"CREATE TABLE TimeLimit (Groupid INT NOT NULL,Userid  INT NOT NULL,Mark TEXT NOT NULL,Ts INT NOT NULL,Times INT NOT NULL DEFAULT (1));CREATE UNIQUE INDEX OnlyTimeLimit ON TimeLimit (Groupid,Userid,Mark);"
-            }
+            #存储间隔回复
+            "TimeLimit":"CREATE TABLE TimeLimit (Groupid INT NOT NULL,Userid  INT NOT NULL,Mark TEXT NOT NULL,Ts INT NOT NULL,Times INT NOT NULL DEFAULT (1));CREATE UNIQUE INDEX OnlyTimeLimit ON TimeLimit (Groupid,Userid,Mark);",
+            #存储群特定信息，包含签到定义
+            "DefineGroup":"CREATE TABLE DefineGroup (Groupid INT NOT NULL UNIQUE,Currency INT DEFAULT 胡桃夹 NOT NULL,Welcome TEXT DEFAULT (0) NOT NULL,State INT NOT NULL DEFAULT (1),Maxday INT NOT NULL DEFAULT (7),Conbonus DEFAULT (1) NOT NULL);"}
         for table_name, create_sen in table_dict.items():
             #如果表名不存在在表列表中
             if table_name not in table_list:
@@ -66,6 +69,9 @@ if __name__ != "__main__":
     data_file = "./plugin/data/Luka"
     if not os.path.exists(data_file):
         os.mkdir(data_file)
+    #创建牌堆目录
+    if not os.path.exists(data_file + "/deck"):
+        os.mkdir(data_file + "/deck")
     msg_db = sqlite3.connect(data_file + '/storage.db', isolation_level=None, check_same_thread=False)
     #手动初始化校对数据库模式
     sqliteOperation().init_table()

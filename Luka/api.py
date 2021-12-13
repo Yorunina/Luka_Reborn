@@ -9,13 +9,26 @@
 #  |        \ \ /  . \  / |  |  \    /  \ (_ o _) / #
 #  `--------`  ``-'`-''   `--'   `'-'    '.(_,_).'  #
 #####################################################
-
-import storage_man as sm
+from OlivOS.onebotSDK import event_action as onebotSDK
+import Luka.storage_man as sm
 import time
 
-class MsgWindow(object):
-    def __init__(group_id, user_id):
+class onebot:
+    def __init__(self, event):
+        self.event = event
         return
+    def group_member_info(self):
+        group_id = self.event.data.group_id
+        user_id = self.event.data.user_id
+        return onebotSDK.get_group_member_info(self.event, group_id, user_id)
+        
+    def check_permission(self, role = "admin"):
+        member_role = self.group_member_info()['data']['role']
+        permission_dict = {"owner":3,"admin":2,"member":1}
+        if permission_dict[member_role] >= permission_dict[role]:
+            return True
+        else:
+            return False
 
 class IndePoint(sm.sqliteOperation):
     def __init__(self, user_id:int, group_id:int = 0):
@@ -106,3 +119,73 @@ class TimeLimit(sm.sqliteOperation):
             self.exec("UPDATE TimeLimit SET Times=? WHERE Groupid=? AND Userid=? AND Mark=?",
             (self.times+1, self.group_id, self.user_id, mark))
         return True
+
+
+#定义群属性
+class DefineGroup(sm.sqliteOperation):
+    def __init__(self):
+        sm.sqliteOperation.__init__(self)
+        return
+    def check_exist(self, group_id):
+        res = self.get_exec("SELECT Groupid FROM DefineGroup WHERE Groupid=?",(group_id,))
+        if res:
+            return True
+        else:
+            return False
+
+    def set_welcome(self, group_id, content):
+        if not self.check_exist(group_id):
+            #如果不存在就新建
+            self.exec("INSERT INTO DefineGroup (Groupid) VALUES (?)",(group_id,))
+        self.exec("UPDATE DefineGroup SET Welcome=? WHERE Groupid=?",(content, group_id))
+        return
+    
+    
+    def set_maxday(self, group_id, content):
+        if not self.check_exist(group_id):
+            #如果不存在就新建
+            self.exec("INSERT INTO DefineGroup (Groupid) VALUES (?)",(group_id,))
+        self.exec("UPDATE DefineGroup SET Maxday=? WHERE Groupid=?",(content, group_id))
+        return
+    
+    def set_conbonus(self, group_id, content):
+        if not self.check_exist(group_id):
+            #如果不存在就新建
+            self.exec("INSERT INTO DefineGroup (Groupid) VALUES (?)",(group_id,))
+        self.exec("UPDATE DefineGroup SET Conbonus=? WHERE Groupid=?",(content, group_id))
+        return
+
+    def set_currency(self, group_id, content):
+        #鉴权
+        if not self.check_exist(group_id):
+            #如果不存在就新建
+            self.exec("INSERT INTO DefineGroup (Groupid) VALUES (?)",(group_id,))
+        self.exec("UPDATE DefineGroup SET Currency=? WHERE Groupid=?",(content, group_id))
+        return
+    
+    def set_state(self, group_id, state):
+        #开关
+        if not self.check_exist(group_id):
+            #如果不存在就新建
+            self.exec("INSERT INTO DefineGroup (Groupid) VALUES (?)",(group_id,))
+        self.exec("UPDATE DefineGroup SET State=? WHERE Groupid=?",(state, group_id))
+        return
+
+class GetGroup(sm.sqliteOperation):
+    def __init__(self):
+        sm.sqliteOperation.__init__(self)
+        return
+    def get_state(self, event):
+        #获取开关状态
+        res = self.get_exec("SELECT State FROM DefineGroup WHERE Groupid=?", (event.data.group_id,))
+        if res:
+            return res[0]
+        else:
+            return 1
+    def get_welcome(self, event):
+        #获取群欢迎
+        res = self.get_exec("SELECT Welcome FROM DefineGroup WHERE Groupid=?", (event.data.group_id,))
+        if res:
+            return res[0]
+        else:
+            return
