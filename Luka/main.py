@@ -31,20 +31,26 @@ class Event(object):
 
     def group_message(plugin_event, Proc):
         if plugin_event.data.message.startswith("/"):
-        # 清除空格和首位
             if plugin_event.data.message == "/榴歌关闭":
                 rm.set_state_close(plugin_event)
             elif plugin_event.data.message == "/榴歌开启":
                 rm.set_state_open(plugin_event)
             else:
-                if api.GetGroup().get_state(plugin_event) != 0:
+                if api.GetGroupDefine(plugin_event.data.group_id).state != 0:
                     group_reply(plugin_event, Proc)
 
     def group_member_increase(plugin_event, Proc):
         #获取当前群的入群欢迎
-        welcome = api.GetGroup().get_welcome(plugin_event)
-        if welcome:
+        welcome = api.GetGroupDefine(plugin_event.data.group_id).welcome
+        if welcome != 0:
             plugin_event.reply(welcome)
+        return
+
+    def group_member_decrease(plugin_event, Proc):
+        #获取当前群的离群语
+        welgo = api.GetGroupDefine(plugin_event.data.group_id).welgo
+        if welgo != 0:
+            plugin_event.reply(welgo)
         return
 
     def save(plugin_event, Proc):
@@ -69,6 +75,10 @@ def group_reply(event, Proc):
     if get_re:
         rm.set_welcome(event, get_re)
         return
+    get_re = re.match("\/离群送别\s*(.*)\s*", msg, flags=re.I|re.M)
+    if get_re:
+        rm.set_welgo(event, get_re)
+        return
     get_re = re.match("\/定义连签上限\s*(\d+)", msg, flags=re.I|re.M)
     if get_re:
         rm.set_maxday(event, get_re)
@@ -76,6 +86,14 @@ def group_reply(event, Proc):
     get_re = re.match("\/定义连签加值\s*(\d+)", msg, flags=re.I|re.M)
     if get_re:
         rm.set_conbonus(event, get_re)
+        return
+    get_re = re.match("\/定义基础加值\s*(\d+)", msg, flags=re.I|re.M)
+    if get_re:
+        rm.set_basebonus(event, get_re)
+        return
+    get_re = re.match("\/签到", msg, flags=re.I|re.M)
+    if get_re:
+        rm.sign_in(event)
         return
     return
 

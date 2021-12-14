@@ -9,9 +9,13 @@
 #  |        \ \ /  . \  / |  |  \    /  \ (_ o _) / #
 #  `--------`  ``-'`-''   `--'   `'-'    '.(_,_).'  #
 #####################################################
+from ast import Return
 from OlivOS.onebotSDK import event_action as onebotSDK
 import Luka.storage_man as sm
 import time
+
+def clamp(n, minn, maxn): 
+    return max(min(maxn, n), minn)
 
 class onebot:
     def __init__(self, event):
@@ -39,8 +43,8 @@ class IndePoint(sm.sqliteOperation):
 
     def get_operation(self):
         res = self.get_exec("SELECT Point FROM IndePoint WHERE Userid=? AND Groupid=?", (self.user_id, self.group_id))
-        if res:
-            self.exec("INSERT INTO IndePoint (Userid,Gourpid,Point) VALUES (?,?,?)",(self.user_id, self.group_id, 0))
+        if not res:
+            self.exec("INSERT INTO IndePoint (Userid,Groupid,Point) VALUES (?,?,?)",(self.user_id, self.group_id, 0))
             point = 0
         else:
             point = res[0]
@@ -49,7 +53,7 @@ class IndePoint(sm.sqliteOperation):
 
     def quick_update_operation(self, expr:str = ""):
         #存在注入风险，请勿暴露
-        ori_point = self.get_operation(self.group_id, self.user_id)
+        ori_point = self.get_operation()
         if expr:
             #将预留自我标识符号替换为变量
             expr = expr.replace("[Point]",str(ori_point))
@@ -77,7 +81,6 @@ class TimeLimit(sm.sqliteOperation):
         self.get_ts = int(time.time())
         if not res:
             res = (self.get_ts,0)
-        
         self.ts = res[0]
         self.times = res[1]
         return (self.ts,self.times)
@@ -102,8 +105,8 @@ class TimeLimit(sm.sqliteOperation):
     
     def check_day_record(self, mark:str, interval:int = 1, limit:int = 1):
         self.get_record(mark)
-        day = self.ts//86400
-        get_day = self.get_ts//86400
+        day = (self.ts+28800)//86400
+        get_day = (self.get_ts+28800)//86400
         if self.times == 0:
             #不存在且允许自增
             self.exec("REPLACE INTO TimeLimit (Groupid,Userid,Mark,Ts,Times) VALUES (?,?,?,?,?)",
@@ -126,6 +129,7 @@ class DefineGroup(sm.sqliteOperation):
     def __init__(self):
         sm.sqliteOperation.__init__(self)
         return
+
     def check_exist(self, group_id):
         res = self.get_exec("SELECT Groupid FROM DefineGroup WHERE Groupid=?",(group_id,))
         if res:
@@ -140,6 +144,12 @@ class DefineGroup(sm.sqliteOperation):
         self.exec("UPDATE DefineGroup SET Welcome=? WHERE Groupid=?",(content, group_id))
         return
     
+    def set_welgo(self, group_id, content):
+        if not self.check_exist(group_id):
+            #如果不存在就新建
+            self.exec("INSERT INTO DefineGroup (Groupid) VALUES (?)",(group_id,))
+        self.exec("UPDATE DefineGroup SET Welgo=? WHERE Groupid=?",(content, group_id))
+        return
     
     def set_maxday(self, group_id, content):
         if not self.check_exist(group_id):
@@ -153,6 +163,13 @@ class DefineGroup(sm.sqliteOperation):
             #如果不存在就新建
             self.exec("INSERT INTO DefineGroup (Groupid) VALUES (?)",(group_id,))
         self.exec("UPDATE DefineGroup SET Conbonus=? WHERE Groupid=?",(content, group_id))
+        return
+
+    def set_basebonus(self, group_id, content):
+        if not self.check_exist(group_id):
+            #如果不存在就新建
+            self.exec("INSERT INTO DefineGroup (Groupid) VALUES (?)",(group_id,))
+        self.exec("UPDATE DefineGroup SET Basebonus=? WHERE Groupid=?",(content, group_id))
         return
 
     def set_currency(self, group_id, content):
@@ -171,21 +188,19 @@ class DefineGroup(sm.sqliteOperation):
         self.exec("UPDATE DefineGroup SET State=? WHERE Groupid=?",(state, group_id))
         return
 
-class GetGroup(sm.sqliteOperation):
-    def __init__(self):
+class GetGroupDefine(sm.sqliteOperation):
+    def __init__(self, group_id):
         sm.sqliteOperation.__init__(self)
+        res = self.get_exec("SELECT * FROM DefineGroup WHERE Groupid=?", (group_id,))
+        if not res:
+            self.exec("INSERT INTO DefineGroup (Groupid) VALUES (?)",(group_id,))
+            res = (group_id,"胡桃夹", 0, 0, 1, 7, 1, 1)
+        (self.group_id,
+        self.currency,
+        self.welcome,
+        self.welgo,
+        self.state,
+        self.maxday,
+        self.conbonus,
+        self.basebonus) = res
         return
-    def get_state(self, event):
-        #获取开关状态
-        res = self.get_exec("SELECT State FROM DefineGroup WHERE Groupid=?", (event.data.group_id,))
-        if res:
-            return res[0]
-        else:
-            return 1
-    def get_welcome(self, event):
-        #获取群欢迎
-        res = self.get_exec("SELECT Welcome FROM DefineGroup WHERE Groupid=?", (event.data.group_id,))
-        if res:
-            return res[0]
-        else:
-            return

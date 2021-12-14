@@ -34,7 +34,10 @@ class sqliteOperation(object):
             #存储间隔回复
             "TimeLimit":"CREATE TABLE TimeLimit (Groupid INT NOT NULL,Userid  INT NOT NULL,Mark TEXT NOT NULL,Ts INT NOT NULL,Times INT NOT NULL DEFAULT (1));CREATE UNIQUE INDEX OnlyTimeLimit ON TimeLimit (Groupid,Userid,Mark);",
             #存储群特定信息，包含签到定义
-            "DefineGroup":"CREATE TABLE DefineGroup (Groupid INT NOT NULL UNIQUE,Currency INT DEFAULT 胡桃夹 NOT NULL,Welcome TEXT DEFAULT (0) NOT NULL,State INT NOT NULL DEFAULT (1),Maxday INT NOT NULL DEFAULT (7),Conbonus DEFAULT (1) NOT NULL);"}
+            "DefineGroup":"CREATE TABLE DefineGroup (Groupid INT NOT NULL UNIQUE,Currency INT DEFAULT 胡桃夹 NOT NULL,Welcome TEXT DEFAULT (0) NOT NULL,Welgo TEXT DEFAULT (0) NOT NULL,State INT NOT NULL DEFAULT (1),Maxday INT NOT NULL DEFAULT (7),Conbonus DEFAULT (1) NOT NULL,Basebonus DEFAULT (1) NOT NULL);",
+            #存储连续签到数据
+            "ConSign":"CREATE TABLE ConSign (Groupid INT NOT NULL,Userid INT NOT NULL,LastSign INT NOT NULL,BeginSign INT NOT NULL);CREATE UNIQUE INDEX OnlyGroupSign ON ConSign (Groupid,Userid);"
+            }
         for table_name, create_sen in table_dict.items():
             #如果表名不存在在表列表中
             if table_name not in table_list:
