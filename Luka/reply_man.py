@@ -154,3 +154,15 @@ def sign_in(event):
     db.exec("REPLACE INTO ConSign (Groupid,Userid,LastSign,BeginSign) VALUES (?,?,?,?)",(group_id,user_id,now_ts,begin_sign))
     return
 
+#商品上架
+def goods_shelves(event, get_re):
+    group_id = event.data.group_id
+    displayname = get_re.group(1)
+    buylimit = int(get_re.group(2)) if get_re.group(2) else -1
+    price = int(get_re.group(3))
+    description = get_re.group(4) if get_re.group(4) else ""
+    if api.DefineGroupStore().add_new_goods(group_id, displayname, price, buylimit, description):
+        event.reply("上架成功！\n您成功上架商品[%s]！" % displayname)
+    else:
+        event.reply("诶？似乎已经存在这样商品了~\n不过我还是把[%s]重新上架了一遍哦。" % displayname)
+    return

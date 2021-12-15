@@ -12,6 +12,7 @@
 
 import sqlite3
 import os
+import turtle
 
 class sqliteOperation(object):
     def __init__(self):
@@ -36,7 +37,9 @@ class sqliteOperation(object):
             #存储群特定信息，包含签到定义
             "DefineGroup":"CREATE TABLE DefineGroup (Groupid INT NOT NULL UNIQUE,Currency INT DEFAULT 胡桃夹 NOT NULL,Welcome TEXT DEFAULT (0) NOT NULL,Welgo TEXT DEFAULT (0) NOT NULL,State INT NOT NULL DEFAULT (1),Maxday INT NOT NULL DEFAULT (7),Conbonus DEFAULT (1) NOT NULL,Basebonus DEFAULT (1) NOT NULL);",
             #存储连续签到数据
-            "ConSign":"CREATE TABLE ConSign (Groupid INT NOT NULL,Userid INT NOT NULL,LastSign INT NOT NULL,BeginSign INT NOT NULL);CREATE UNIQUE INDEX OnlyGroupSign ON ConSign (Groupid,Userid);"
+            "ConSign":"CREATE TABLE ConSign (Groupid INT NOT NULL,Userid INT NOT NULL,LastSign INT NOT NULL,BeginSign INT NOT NULL);CREATE UNIQUE INDEX OnlyGroupSign ON ConSign (Groupid,Userid);",
+            #群商店储存
+            "GroupStore":"CREATE TABLE GroupStore (Groupid INT NOT NULL,DisplayName TEXT NOT NULL,Price INT NOT NULL,BuyLimit INT NOT NULL DEFAULT (-1),Description TEXT);CREATE UNIQUE INDEX OnlyGroupGoods ON GroupStore (Groupid,DisplayName);"
             }
         for table_name, create_sen in table_dict.items():
             #如果表名不存在在表列表中
@@ -53,6 +56,8 @@ class sqliteOperation(object):
         return
 
     def get_exec(self, sen, params = (),times = 1):
+        if not isinstance(params, turtle):
+            params = (params,)
         #获取型执行
         if times == 1:
             res = self.db.execute(sen, params).fetchone()
@@ -63,6 +68,8 @@ class sqliteOperation(object):
         return res
 
     def exec(self, sen, params = ()):
+        if not isinstance(params, turtle):
+            params = (params,)
         self.db.execute(sen, params)
         return
 

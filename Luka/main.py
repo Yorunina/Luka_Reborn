@@ -95,6 +95,14 @@ def group_reply(event, Proc):
     if get_re:
         rm.sign_in(event)
         return
+    get_re = re.match("\/上架\s*([^\[]+)(?:\[限(\d{1,3})\])?\s*\[价(\d+)\]\s*(?:\[描述(.+)\])?\s*", msg, flags=re.I|re.M)
+    if get_re:
+        rm.goods_shelves(event, get_re)
+        return
+    get_re = re.match("\/签到", msg, flags=re.I|re.M)
+    if get_re:
+        rm.sign_in(event)
+        return
     return
 
 

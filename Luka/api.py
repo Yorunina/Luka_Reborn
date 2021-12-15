@@ -9,7 +9,7 @@
 #  |        \ \ /  . \  / |  |  \    /  \ (_ o _) / #
 #  `--------`  ``-'`-''   `--'   `'-'    '.(_,_).'  #
 #####################################################
-from ast import Return
+from tokenize import group
 from OlivOS.onebotSDK import event_action as onebotSDK
 import Luka.storage_man as sm
 import time
@@ -34,6 +34,7 @@ class onebot:
         else:
             return False
 
+#群积分操作
 class IndePoint(sm.sqliteOperation):
     def __init__(self, user_id:int, group_id:int = 0):
         sm.sqliteOperation.__init__(self)
@@ -68,6 +69,7 @@ class IndePoint(sm.sqliteOperation):
         res = self.get_exec("SELECT Userid,Point FROM IndePoint WHERE Groupid=? ORDER BY Point DESC LIMIT ?",(self.group_id, num), -1)
         return res
 
+#时间限制操作
 class TimeLimit(sm.sqliteOperation):
     def __init__(self, user_id:int, group_id:int = 0):
         sm.sqliteOperation.__init__(self)
@@ -122,7 +124,6 @@ class TimeLimit(sm.sqliteOperation):
             self.exec("UPDATE TimeLimit SET Times=? WHERE Groupid=? AND Userid=? AND Mark=?",
             (self.times+1, self.group_id, self.user_id, mark))
         return True
-
 
 #定义群属性
 class DefineGroup(sm.sqliteOperation):
@@ -188,6 +189,7 @@ class DefineGroup(sm.sqliteOperation):
         self.exec("UPDATE DefineGroup SET State=? WHERE Groupid=?",(state, group_id))
         return
 
+#获取群属性
 class GetGroupDefine(sm.sqliteOperation):
     def __init__(self, group_id):
         sm.sqliteOperation.__init__(self)
@@ -204,3 +206,63 @@ class GetGroupDefine(sm.sqliteOperation):
         self.conbonus,
         self.basebonus) = res
         return
+
+#定义群商店
+class DefineGroupStore(sm.sqliteOperation):
+    def __init__(self):
+        sm.sqliteOperation.__init__(self)
+        return
+    def check_exist(self, group_id):
+        res = self.get_exec("SELECT Groupid FROM GroupStore WHERE Groupid=?",(group_id,))
+        if res:
+            return True
+        else:
+            return False
+    #添加新商品
+    def add_new_goods(self, group_id:int, displayname:str, price:int, buylimit:int = -1, description:str = ""):
+        rowid = self.get_exec("SELECT rowid FROM GroupStore WHERE Groupid=? AND DisplayName=?",(group_id,displayname))
+        re_bool = True
+        if rowid:
+            re_bool = False
+        self.exec("REPLACE INTO GroupStore (Groupid, DisplayName, Price, BuyLimit, Description) VALUES (?,?,?,?,?)",
+        (group_id,displayname,price,buylimit,description))
+        return re_bool
+    #下架商品
+    def del_old_goods(self, group_id:int, displayname:str):
+        rowid = self.get_exec("SELECT rowid FROM GroupStore WHERE Groupid=? AND DisplayName=?",(group_id,displayname))
+        if rowid:
+            self.exec("DELETE FROM GroupStore WHERE rowid=?",rowid)
+        else:
+            return False
+        return True
+    #下架所有商品
+    def del_all_goods(self, group_id:int):
+        self.exec("DELETE FROM GroupStore WHERE Groupid=?",(group_id,))
+        return
+    #减少限量状态
+    def refresh_limit(self, group_id:int, displayname:str, buytimes:int = 1):
+        (rowid,buylimit) = self.get_exec("SELECT rowid,BuyLimit FROM GroupStore WHERE Groupid=? AND DisplayName=?",(group_id,displayname))
+        if rowid:
+            if buylimit - buytimes > 0:
+                self.exec("UPDATE GroupStore SET BuyLimit=? WHERE rowid=?",(buylimit - buytimes,rowid))
+                return 1
+            elif buylimit - buytimes == 0:
+                self.exec("DELETE FROM GroupStore WHERE rowid=?",rowid)
+            elif buylimit < 0:
+                return 1
+            elif buylimit - buytimes < 0:
+                return -1
+        return -2
+
+#获取群商店
+class GetGroupStore(sm.sqliteOperation):
+    def __init__(self,group_id:int):
+        sm.sqliteOperation.__init__(self)
+        self.group_id = group_id
+        return
+    def get_all_goods(self):
+        res = self.get_exec("SELECT DisplayName,Price,BuyLimit,Description FROM GroupStore WHERE Groupid=?",(self.group_id,),-1)
+        return res
+    def get_goods(self,displayname):
+        res = self.get_exec("SELECT DisplayName,Price,BuyLimit,Description FROM GroupStore WHERE Groupid=? AND DisplayName=?",(self.group_id,displayname))
+        return res
