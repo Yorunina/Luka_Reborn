@@ -15,6 +15,8 @@ import re
 import Luka.storage_man as sm
 import Luka.api as api
 import Luka.reply_man as rm
+import html
+
 
 class Event(object):
     def init(plugin_event, Proc):
@@ -66,7 +68,7 @@ def private_reply(event, Proc):
 
 def group_reply(event, Proc):
     msg = event.data.message
-
+    msg = html.unescape(msg)
     get_re = re.match("\/定义积分单位\s*(.+)", msg, flags=re.I|re.M)
     if get_re:
         rm.set_currency(event, get_re)
@@ -97,11 +99,15 @@ def group_reply(event, Proc):
         return
     get_re = re.match("\/上架\s*([^\[]+)(?:\[限(\d{1,3})\])?\s*\[价(\d+)\]\s*(?:\[描述(.+)\])?\s*", msg, flags=re.I|re.M)
     if get_re:
-        rm.goods_shelves(event, get_re)
+        rm.goods_on_shelves(event, get_re)
         return
-    get_re = re.match("\/签到", msg, flags=re.I|re.M)
+    get_re = re.match("\/下架\s*([^\[]+)\s*", msg, flags=re.I|re.M)
     if get_re:
-        rm.sign_in(event)
+        rm.goods_off_shelves(event, get_re)
+        return
+    get_re = re.match("\/商店\s*(\d*)\s*", msg, flags=re.I|re.M)
+    if get_re:
+        rm.get_page_goods(event, get_re)
         return
     return
 

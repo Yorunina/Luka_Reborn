@@ -56,8 +56,6 @@ class sqliteOperation(object):
         return
 
     def get_exec(self, sen, params = (),times = 1):
-        if not isinstance(params, turtle):
-            params = (params,)
         #获取型执行
         if times == 1:
             res = self.db.execute(sen, params).fetchone()
@@ -68,8 +66,6 @@ class sqliteOperation(object):
         return res
 
     def exec(self, sen, params = ()):
-        if not isinstance(params, turtle):
-            params = (params,)
         self.db.execute(sen, params)
         return
 

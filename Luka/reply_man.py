@@ -155,7 +155,7 @@ def sign_in(event):
     return
 
 #商品上架
-def goods_shelves(event, get_re):
+def goods_on_shelves(event, get_re):
     group_id = event.data.group_id
     displayname = get_re.group(1)
     buylimit = int(get_re.group(2)) if get_re.group(2) else -1
@@ -165,4 +165,43 @@ def goods_shelves(event, get_re):
         event.reply("上架成功！\n您成功上架商品[%s]！" % displayname)
     else:
         event.reply("诶？似乎已经存在这样商品了~\n不过我还是把[%s]重新上架了一遍哦。" % displayname)
+    return
+
+#商品下架
+def goods_off_shelves(event, get_re):
+    group_id = event.data.group_id
+    displayname = get_re.group(1)
+    if api.DefineGroupStore().del_old_goods(group_id, displayname):
+        event.reply("下架成功！\n您成功下架商品[%s]！" % displayname)
+    else:
+        event.reply("诶？似乎商店并不存在名为[%s]的商品哦？" % displayname)
+    return
+
+#查看商店
+def get_page_goods(event, get_re):
+    per_page = 8
+    group_id = event.data.group_id
+    page = int(get_re.group(1)) if get_re.group(1) else 1
+    all_goods = api.GetGroupStore(group_id).get_all_goods()
+    currency = api.GetGroupDefine(group_id).currency
+    goods_amount = len(all_goods)
+    all_page = goods_amount//per_page + 1
+    if goods_amount == 0:
+        event.reply("「欢迎光临群%s兑换店」\n不过似乎你没有上架任何商品哦~" % currency)
+        return
+    if page <= all_page and page >= 1:
+        num = page*per_page - per_page
+        goods_str = ["「欢迎光临群%s兑换店」" % currency]
+        while num < min(goods_amount, page*per_page):
+            this_good = all_goods[num]
+            this_str = "%s | %i×%s" % (num,this_good[0],this_good[1],currency)
+            if this_good[2] != -1:
+                this_str += " | 剩余%i份" % this_good[2]
+            goods_str.append(this_str)
+            num += 1
+        goods_str.append("总页数/当前页数：%i / %i" % (all_page, page))
+        event.reply("\n".join(goods_str))
+        return
+    else:
+        event.reply("群商店总共[ %i ]页，请输入一个合法的页数哦~" % (all_page))
     return
