@@ -39,7 +39,9 @@ class sqliteOperation(object):
             #存储连续签到数据
             "ConSign":"CREATE TABLE ConSign (Groupid INT NOT NULL,Userid INT NOT NULL,LastSign INT NOT NULL,BeginSign INT NOT NULL);CREATE UNIQUE INDEX OnlyGroupSign ON ConSign (Groupid,Userid);",
             #群商店储存
-            "GroupStore":"CREATE TABLE GroupStore (Groupid INT NOT NULL,DisplayName TEXT NOT NULL,Price INT NOT NULL,BuyLimit INT NOT NULL DEFAULT (-1),Description TEXT);CREATE UNIQUE INDEX OnlyGroupGoods ON GroupStore (Groupid,DisplayName);"
+            "GroupStore":"CREATE TABLE GroupStore (Groupid INT NOT NULL,DisplayName TEXT NOT NULL,Price INT NOT NULL,BuyLimit INT NOT NULL DEFAULT (-1),Description TEXT);CREATE UNIQUE INDEX OnlyGroupGoods ON GroupStore (Groupid,DisplayName);",
+            #群背包储存
+            "IndeBagPack":"CREATE TABLE IndeBagPack (Groupid INT NOT NULL,Userid INT NOT NULL,Item TEXT NOT NULL,Count INT NOT NULL DEFAULT (1));CREATE UNIQUE INDEX OnlyGroupBag ON IndeBagPack (Groupid,Userid,Item);"
             }
         for table_name, create_sen in table_dict.items():
             #如果表名不存在在表列表中

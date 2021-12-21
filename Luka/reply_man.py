@@ -10,11 +10,11 @@
 #  `--------`  ``-'`-''   `--'   `'-'    '.(_,_).'  #
 #####################################################
 
-from locale import currency
 import Luka.storage_man as sm
 import Luka.api as api
 import random
 import time
+import re
 
 ############################
 #分群积分/群商店系统
@@ -158,9 +158,23 @@ def sign_in(event):
 def goods_on_shelves(event, get_re):
     group_id = event.data.group_id
     displayname = get_re.group(1)
-    buylimit = int(get_re.group(2)) if get_re.group(2) else -1
-    price = int(get_re.group(3))
-    description = get_re.group(4) if get_re.group(4) else ""
+    main_content = get_re.group(2)
+    price_get_re = re.search("\[价格?(\d+)\]", main_content, flags=re.I|re.M)
+    if price_get_re:
+        price = int(price_get_re.group(1))
+    else:
+        event.reply("上架物品必须带有价格哦~\n如/上架测试[价格12]")
+        return
+    buylimit_get_re = re.search("\[限购?(\d+)\]", main_content, flags=re.I|re.M)
+    if buylimit_get_re:
+        buylimit = int(buylimit_get_re.group(1))
+    else:
+        buylimit = -1
+    description_get_re = re.search("\[描述?(^\])\]", main_content, flags=re.I|re.M)
+    if description_get_re:
+        description = description_get_re.group(1)
+    else:
+        description = ""
     if api.DefineGroupStore().add_new_goods(group_id, displayname, price, buylimit, description):
         event.reply("上架成功！\n您成功上架商品[%s]！" % displayname)
     else:
@@ -194,7 +208,7 @@ def get_page_goods(event, get_re):
         goods_str = ["「欢迎光临群%s兑换店」" % currency]
         while num < min(goods_amount, page*per_page):
             this_good = all_goods[num]
-            this_str = "%s | %i×%s" % (num,this_good[0],this_good[1],currency)
+            this_str = "%s | %i×%s" % (this_good[0],this_good[1],currency)
             if this_good[2] != -1:
                 this_str += " | 剩余%i份" % this_good[2]
             goods_str.append(this_str)
@@ -205,3 +219,37 @@ def get_page_goods(event, get_re):
     else:
         event.reply("群商店总共[ %i ]页，请输入一个合法的页数哦~" % (all_page))
     return
+
+#购买
+def group_store_buy(event, get_re):
+    displayname = get_re.group(1)
+    buytimes = int(get_re.group(2)) if get_re.group(2) else 1
+    if buytimes <= 0:
+        event.reply("请输入一个合理的数字！")
+        return
+    group_id = event.data.group_id
+    user_id = event.data.user_id
+    goods_state = api.GetGroupStore(group_id).get_goods(displayname)
+    if not goods_state:
+        event.reply("似乎并不存在这件商品哦~\n快用/商店来看看到底有些什么吧！")
+        return
+    price = goods_state[1]
+    buylimit = goods_state[2]
+    group_point_obj = api.IndePoint(user_id, group_id)
+    old_point = group_point_obj.get_operation()
+    currency = api.GetGroupDefine(group_id).currency
+    if buylimit >= buytimes or buylimit == -1:
+        if old_point >= price * buytimes:
+            now_count = api.IndeBagPack(user_id,group_id).quick_update_operation(displayname, "[count]+%i" % buytimes)
+            now_point = api.IndePoint(user_id,group_id).set_operation(old_point-price*buytimes)
+            if buylimit != -1:
+                api.DefineGroupStore().set_limit(group_id, displayname, buylimit-buytimes)
+            event.reply("购买成功！\n你当前拥有%s[%i]个\n%s %i→%i" % (displayname,now_count,currency,old_point,now_point))
+            return
+        else:
+            event.reply("似乎你没有这么多的%s呢. . .\n你需要%s[%i]个，而你当前仅有[%i]个" %
+            (currency,currency,price*buytimes,old_point))
+            return
+    else:
+        event.reply("商店里货品数量不够啦！\n你最多可以购买[%i]个%s！" % (buylimit, displayname))
+        return

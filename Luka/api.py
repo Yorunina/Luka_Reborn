@@ -64,10 +64,19 @@ class IndePoint(sm.sqliteOperation):
             return (ori_point,point)
         else:
             return (ori_point,ori_point)
+    
+    def set_operation(self, point:int):
+        self.exec("REPLACE INTO IndePoint (Userid,Groupid,Point) VALUES (?,?,?)",(self.user_id, self.group_id, point))
+        return point
 
     def group_rank_operation(self, num:int = 10):
         res = self.get_exec("SELECT Userid,Point FROM IndePoint WHERE Groupid=? ORDER BY Point DESC LIMIT ?",(self.group_id, num), -1)
         return res
+
+#群背包
+class GroupBagPack(sm.sqliteOperation):
+    def __init__(self):
+        return
 
 #时间限制操作
 class TimeLimit(sm.sqliteOperation):
@@ -218,6 +227,7 @@ class DefineGroupStore(sm.sqliteOperation):
             return True
         else:
             return False
+
     #添加新商品
     def add_new_goods(self, group_id:int, displayname:str, price:int, buylimit:int = -1, description:str = ""):
         rowid = self.get_exec("SELECT rowid FROM GroupStore WHERE Groupid=? AND DisplayName=?",(group_id,displayname))
@@ -227,6 +237,7 @@ class DefineGroupStore(sm.sqliteOperation):
         self.exec("REPLACE INTO GroupStore (Groupid, DisplayName, Price, BuyLimit, Description) VALUES (?,?,?,?,?)",
         (group_id,displayname,price,buylimit,description))
         return re_bool
+
     #下架商品
     def del_old_goods(self, group_id:int, displayname:str):
         rowid = self.get_exec("SELECT rowid FROM GroupStore WHERE Groupid=? AND DisplayName=?",(group_id,displayname))
@@ -235,10 +246,12 @@ class DefineGroupStore(sm.sqliteOperation):
         else:
             return False
         return True
+
     #下架所有商品
     def del_all_goods(self, group_id:int):
         self.exec("DELETE FROM GroupStore WHERE Groupid=?",(group_id,))
         return
+
     #减少限量状态
     def refresh_limit(self, group_id:int, displayname:str, buytimes:int = 1):
         (rowid,buylimit) = self.get_exec("SELECT rowid,BuyLimit FROM GroupStore WHERE Groupid=? AND DisplayName=?",(group_id,displayname))
@@ -253,6 +266,13 @@ class DefineGroupStore(sm.sqliteOperation):
             elif buylimit - buytimes < 0:
                 return -1
         return -2
+    
+    def set_limit(self, group_id, displayname, buylimit):
+        if buylimit <= 0:
+            self.del_old_goods(group_id, displayname)
+        else:
+            self.exec("UPDATE GroupStore SET BuyLimit=? WHERE Groupid=? AND DisplayName=?",(buylimit,group_id,displayname))
+        return
 
 #获取群商店
 class GetGroupStore(sm.sqliteOperation):
@@ -266,3 +286,56 @@ class GetGroupStore(sm.sqliteOperation):
     def get_goods(self,displayname):
         res = self.get_exec("SELECT DisplayName,Price,BuyLimit,Description FROM GroupStore WHERE Groupid=? AND DisplayName=?",(self.group_id,displayname))
         return res
+
+
+#群背包操作
+#群积分操作
+class IndeBagPack(sm.sqliteOperation):
+    def __init__(self, user_id:int, group_id:int = 0):
+        sm.sqliteOperation.__init__(self)
+        self.user_id = user_id
+        self.group_id = group_id
+        return
+
+    def get_all_item(self):
+        res = self.get_exec("SELECT Item,Count FROM InBagPack WHERE Groupid=? AND Userid=?", (self.user_id, self.group_id), times=-1)
+        if not res:
+            return False
+        else:
+            return res
+
+    def quick_update_operation(self, item:str,expr:str = ""):
+        #存在注入风险，请勿暴露
+        ori_item = self.get_exec("SELECT Count FROM IndeBagPack WHERE Groupid=? AND Userid=? AND Item=?",(self.group_id,self.user_id,item))
+        if ori_item:
+            ori_count = ori_item[0]
+        else:
+            ori_count = 0
+        if expr:
+            #将预留自我标识符号替换为变量
+            expr = expr.replace("[count]",str(ori_count))
+            count = eval(expr)
+            if count < 0:
+                return False
+            elif count == 0:
+                self.del_item(item)
+            else:
+                self.exec("REPLACE INTO IndeBagPack (Groupid,Userid,Item,Count) VALUES (?,?,?,?)",(self.group_id,self.user_id,item,count))
+            return count
+        else:
+            return ori_count
+
+    def set_item_count(self, item:str, count:int = 1):
+        if count == 0:
+            self.del_item(item)
+        else:
+            self.exec("REPLACE INTO IndeBagPack (Groupid,Userid,Item,Count) VALUES (?,?,?,?)",(self.group_id,self.user_id,item,count))
+        return count
+
+    def del_item(self, item:str):
+        self.exec("DELETE FROM IndeBagPack WHERE Groupid=? AND Userid=? AND Item=?",(self.group_id,self.user_id,item))
+        return
+
+    def del_all_item(self):
+        self.exec("DELETE FROM IndeBagPack WHERE Groupid=? AND Userid=?",(self.group_id,self.user_id))
+        return

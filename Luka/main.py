@@ -97,17 +97,21 @@ def group_reply(event, Proc):
     if get_re:
         rm.sign_in(event)
         return
-    get_re = re.match("\/上架\s*([^\[]+)(?:\[限(\d{1,3})\])?\s*\[价(\d+)\]\s*(?:\[描述(.+)\])?\s*", msg, flags=re.I|re.M)
+    get_re = re.match("\/上架\s*([^\[]*[^\[\s])\s*(.+)\s*", msg, flags=re.I|re.M)
     if get_re:
         rm.goods_on_shelves(event, get_re)
         return
-    get_re = re.match("\/下架\s*([^\[]+)\s*", msg, flags=re.I|re.M)
+    get_re = re.match("\/下架\s*([^\[]*[^\[\s])\s*", msg, flags=re.I|re.M)
     if get_re:
         rm.goods_off_shelves(event, get_re)
         return
     get_re = re.match("\/商店\s*(\d*)\s*", msg, flags=re.I|re.M)
     if get_re:
         rm.get_page_goods(event, get_re)
+        return
+    get_re = re.match("\/购买\s*([^\[]*[^\[\s])\s*(?:\[(\d{1,3})\])?\s*", msg, flags=re.I|re.M)
+    if get_re:
+        rm.group_store_buy(event, get_re)
         return
     return
 
