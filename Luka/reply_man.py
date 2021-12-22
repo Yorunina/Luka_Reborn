@@ -206,14 +206,14 @@ def get_page_goods(event, get_re):
     if page <= all_page and page >= 1:
         num = page*per_page - per_page
         goods_str = ["「欢迎光临群%s兑换店」" % currency]
-        while num < min(goods_amount, page*per_page):
+        while num <= min(goods_amount-1, page*per_page):
             this_good = all_goods[num]
             this_str = "%s | %i×%s" % (this_good[0],this_good[1],currency)
             if this_good[2] != -1:
                 this_str += " | 剩余%i份" % this_good[2]
             goods_str.append(this_str)
             num += 1
-        goods_str.append("总页数/当前页数：%i / %i" % (all_page, page))
+        goods_str.append("当前页数/总页数：%i / %i" % (page, all_page))
         event.reply("\n".join(goods_str))
         return
     else:
@@ -253,3 +253,44 @@ def group_store_buy(event, get_re):
     else:
         event.reply("商店里货品数量不够啦！\n你最多可以购买[%i]个%s！" % (buylimit, displayname))
         return
+
+#使用道具
+def group_bagpack_use(event, get_re):
+    group_id = event.data.group_id
+    user_id = event.data.user_id
+    item = get_re.group(1)
+    usetimes = int(get_re.group(2)) if get_re.group(2) else 1
+    item_count = api.IndeBagPack(user_id, group_id).quick_update_operation(item, "[count]-%i"%usetimes)
+    if not item_count:
+        event.reply("似乎你得背包中并没有这么多的[%s]呢~" % item)
+    else:
+        event.reply("成功使用[%s]×%i！\n当前剩余[%s]×%i" % (item, usetimes, item, item_count))
+    return
+
+#获取背包中物品
+def group_bagpack_getall(event, get_re):
+    group_id = event.data.group_id
+    user_id = event.data.user_id
+    page = int(get_re.group(1)) if get_re.group(1) else 1
+    per_page = 8
+    all_items = api.IndeBagPack(user_id, group_id).get_all_item()
+    item_len = len(all_items)
+    all_page = item_len//per_page + 1
+    if not all_items:
+        event.reply("你的背包内空空如也！不要再看啦！")
+        return
+    else:
+        if page <= all_page and page >= 1:
+            num = page*per_page - per_page
+            reply_list = ["背包内容："]
+            while num <= min(item_len-1, page*page):
+                this_item = all_items[num]
+                item_name = this_item[0]
+                item_count = this_item[1]
+                reply_list.append("%s × %i" % (item_name, item_count))
+                num += 1
+            reply_list.append("当前页数/总页数：%i / %i" % (page, all_page))
+            event.reply("\n".join(reply_list))
+        else:
+            event.reply("请输入一个合法的页数！")   
+    return

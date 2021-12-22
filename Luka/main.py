@@ -113,7 +113,16 @@ def group_reply(event, Proc):
     if get_re:
         rm.group_store_buy(event, get_re)
         return
+    get_re = re.match("\/使用\s*([^\[]*[^\[\s])\s*(?:\[(\d{1,3})\])?\s*", msg, flags=re.I|re.M)
+    if get_re:
+        rm.group_bagpack_use(event, get_re)
+        return
+    get_re = re.match("\/背包\s*(\d*)\s*", msg, flags=re.I|re.M)
+    if get_re:
+        rm.group_bagpack_getall(event, get_re)
+        return
     return
+
 
 
 

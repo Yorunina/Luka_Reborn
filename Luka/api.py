@@ -289,7 +289,6 @@ class GetGroupStore(sm.sqliteOperation):
 
 
 #群背包操作
-#群积分操作
 class IndeBagPack(sm.sqliteOperation):
     def __init__(self, user_id:int, group_id:int = 0):
         sm.sqliteOperation.__init__(self)
@@ -298,11 +297,8 @@ class IndeBagPack(sm.sqliteOperation):
         return
 
     def get_all_item(self):
-        res = self.get_exec("SELECT Item,Count FROM InBagPack WHERE Groupid=? AND Userid=?", (self.user_id, self.group_id), times=-1)
-        if not res:
-            return False
-        else:
-            return res
+        res = self.get_exec("SELECT Item,Count FROM IndeBagPack WHERE Groupid=? AND Userid=?", (self.group_id, self.user_id), times=-1)
+        return res
 
     def quick_update_operation(self, item:str,expr:str = ""):
         #存在注入风险，请勿暴露
