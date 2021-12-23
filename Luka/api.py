@@ -343,10 +343,10 @@ class Gashapon(sm.sqliteOperation):
         self.group_id = group_id
         return
     def get_pool_list(self):
-        res = self.get_exec("SELECT Pool,Token,Price FROM GashaponPool WHERE Groupid=?",(self.group_id))
+        res = self.get_exec("SELECT Pool,Type,Token,Price FROM GashaponPool WHERE Groupid=?",(self.group_id))
         return res
     def get_pool_pro(self, pool):
-        res = self.get_exec("SELECT Pool,Token,Price FROM GashaponPool WHERE Groupid=? AND Pool=?",(self.group_id,pool))
+        res = self.get_exec("SELECT Pool,Type,Token,Price FROM GashaponPool WHERE Groupid=? AND Pool=?",(self.group_id,pool))
         return res
     def add_pool(self, pool, type, token, price):
         self.exec("REPLACE INTO GashaponPool (Groupid,Pool,Type,Token,Price) VALUES (?,?,?,?,?)"

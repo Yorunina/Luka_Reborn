@@ -295,6 +295,21 @@ def group_bagpack_getall(event, get_re):
             event.reply("请输入一个合法的页数！")   
     return
 
-#获取扭蛋机所有的物品
+#获取所有扭蛋池
 def get_all_gashpool(event, get_re):
+    group_id = event.data.group_id
+    pool_list = api.Gashapon(group_id).get_pool_list()
+    if not pool_list:
+        event.reply("本群似乎还没有设置扭蛋机哦~\n快使用 /设扭蛋机榴歌池[类型扭蛋][单价20] 来设置一个扭蛋机吧！")
+    else:
+        msg_list = ["本群扭蛋池如下："]
+        for pool in pool_list:
+            pool_name = pool[0]
+            pool_type = "蛋池" if pool[1]=="扭蛋" else "卡池"
+            pool_token = pool[2]
+            pool_price = pool[3]
+            if pool_token == "积分":
+                pool_token = api.GetGroupDefine(group_id).currency
+            msg_list.append("%s %s %i×%s" % (pool_name,pool_type,pool_token,pool_price))
+        event.reply("\n".join(msg_list))
     return

@@ -45,7 +45,7 @@ class sqliteOperation(object):
             #群扭蛋物品储存
             "GashaponItem":"CREATE TABLE GashaponItem (Groupid INT NOT NULL,Pool TEXT NOT NULL,Item TEXT NOT NULL,Count INT NOT NULL DEFAULT (1));CREATE UNIQUE INDEX OnlyGashaponItem ON GashaponItem (Groupid,Pool,Item);",
             #群扭蛋池定义储存
-            "GashaponPool":"CREATE TABLE GashaponPool (Groupid INT NOT NULL,Pool TEXT NOT NULL,Type INT DEFAULT (0) NOT NULL,Token TEXT NOT NULL DEFAULT (0),Price TEXT NOT NULL DEFAULT (1));CREATE UNIQUE INDEX OnlyGashaponPool ON GashaponPool (Groupid,Pool);"
+            "GashaponPool":"CREATE TABLE GashaponPool (Groupid INT NOT NULL,Pool TEXT NOT NULL,Type INT DEFAULT (0) NOT NULL,Token TEXT NOT NULL DEFAULT 积分,Price TEXT NOT NULL DEFAULT (1));CREATE UNIQUE INDEX OnlyGashaponPool ON GashaponPool (Groupid,Pool);"
             }
         for table_name, create_sen in table_dict.items():
             #如果表名不存在在表列表中
