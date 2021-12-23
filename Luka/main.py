@@ -62,7 +62,6 @@ class Event(object):
 
 
 def private_reply(event, Proc):
-    #消息直插数据库
 
     return
 

@@ -294,3 +294,7 @@ def group_bagpack_getall(event, get_re):
         else:
             event.reply("请输入一个合法的页数！")   
     return
+
+#获取扭蛋机所有的物品
+def get_all_gashpool(event, get_re):
+    return

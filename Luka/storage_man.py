@@ -41,7 +41,11 @@ class sqliteOperation(object):
             #群商店储存
             "GroupStore":"CREATE TABLE GroupStore (Groupid INT NOT NULL,DisplayName TEXT NOT NULL,Price INT NOT NULL,BuyLimit INT NOT NULL DEFAULT (-1),Description TEXT);CREATE UNIQUE INDEX OnlyGroupGoods ON GroupStore (Groupid,DisplayName);",
             #群背包储存
-            "IndeBagPack":"CREATE TABLE IndeBagPack (Groupid INT NOT NULL,Userid INT NOT NULL,Item TEXT NOT NULL,Count INT NOT NULL DEFAULT (1));CREATE UNIQUE INDEX OnlyGroupBag ON IndeBagPack (Groupid,Userid,Item);"
+            "IndeBagPack":"CREATE TABLE IndeBagPack (Groupid INT NOT NULL,Userid INT NOT NULL,Item TEXT NOT NULL,Count INT NOT NULL DEFAULT (1));CREATE UNIQUE INDEX OnlyGroupBag ON IndeBagPack (Groupid,Userid,Item);",
+            #群扭蛋物品储存
+            "GashaponItem":"CREATE TABLE GashaponItem (Groupid INT NOT NULL,Pool TEXT NOT NULL,Item TEXT NOT NULL,Count INT NOT NULL DEFAULT (1));CREATE UNIQUE INDEX OnlyGashaponItem ON GashaponItem (Groupid,Pool,Item);",
+            #群扭蛋池定义储存
+            "GashaponPool":"CREATE TABLE GashaponPool (Groupid INT NOT NULL,Pool TEXT NOT NULL,Type INT DEFAULT (0) NOT NULL,Token TEXT NOT NULL DEFAULT (0),Price TEXT NOT NULL DEFAULT (1));CREATE UNIQUE INDEX OnlyGashaponPool ON GashaponPool (Groupid,Pool);"
             }
         for table_name, create_sen in table_dict.items():
             #如果表名不存在在表列表中

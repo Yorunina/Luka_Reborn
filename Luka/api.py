@@ -9,7 +9,7 @@
 #  |        \ \ /  . \  / |  |  \    /  \ (_ o _) / #
 #  `--------`  ``-'`-''   `--'   `'-'    '.(_,_).'  #
 #####################################################
-from tokenize import group
+
 from OlivOS.onebotSDK import event_action as onebotSDK
 import Luka.storage_man as sm
 import time
@@ -334,4 +334,44 @@ class IndeBagPack(sm.sqliteOperation):
 
     def del_all_item(self):
         self.exec("DELETE FROM IndeBagPack WHERE Groupid=? AND Userid=?",(self.group_id,self.user_id))
+        return
+
+#群扭蛋机操作
+class Gashapon(sm.sqliteOperation):
+    def __init__(self, group_id):
+        sm.sqliteOperation.__init__(self)
+        self.group_id = group_id
+        return
+    def get_pool_list(self):
+        res = self.get_exec("SELECT Pool,Token,Price FROM GashaponPool WHERE Groupid=?",(self.group_id))
+        return res
+    def get_pool_pro(self, pool):
+        res = self.get_exec("SELECT Pool,Token,Price FROM GashaponPool WHERE Groupid=? AND Pool=?",(self.group_id,pool))
+        return res
+    def add_pool(self, pool, type, token, price):
+        self.exec("REPLACE INTO GashaponPool (Groupid,Pool,Type,Token,Price) VALUES (?,?,?,?,?)"
+        ,(self.group_id, pool, type, token, price))
+        return
+
+    def get_all_item(self, pool):
+        res = self.get_exec("SELECT Item,Count FROM GashaponItem WHERE Groupid=? AND Pool=?",(self.group_id,pool))
+        return res
+    def add_item(self, pool, item, count):
+        self.exec("REPLACE INTO GashaponItem (Groupid,Pool,Item,Count)VALUES(?,?,?,?)"
+        ,(self.group_id,pool,item,count))
+        return
+    def del_item(self, pool, item):
+        self.exec("DELETE FROM GashaponItem WHERE Groupid=? AND Pool=? AND Item=?",(self.group_id,pool, item))
+        return
+    def del_all_item(self, pool):
+        self.exec("DELETE FROM GashaponItem WHERE Groupid=? AND Pool=?",(self.group_id,pool))
+        return
+    
+    def del_pool(self, pool):
+        self.exec("DELETE FROM GashaponPool WHERE Groupid=? AND Pool=?",(self.group_id,pool))
+        self.exec("DELETE FROM GashaponItem WHERE Groupid=? AND Pool=?",(self.group_id,pool))
+        return
+    def del_all_pool(self):
+        self.exec("DELETE FROM GashaponPool WHERE Groupid=?",(self.group_id))
+        self.exec("DELETE FROM GashaponItem WHERE Groupid=?",(self.group_id))
         return
