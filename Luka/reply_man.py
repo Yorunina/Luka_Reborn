@@ -10,6 +10,7 @@
 #  `--------`  ``-'`-''   `--'   `'-'    '.(_,_).'  #
 #####################################################
 
+from multiprocessing import pool
 import Luka.storage_man as sm
 import Luka.api as api
 import random
@@ -296,20 +297,59 @@ def group_bagpack_getall(event, get_re):
     return
 
 #获取所有扭蛋池
-def get_all_gashpool(event, get_re):
+def get_all_gashpool(event):
     group_id = event.data.group_id
     pool_list = api.Gashapon(group_id).get_pool_list()
     if not pool_list:
-        event.reply("本群似乎还没有设置扭蛋机哦~\n快使用 /设扭蛋机榴歌池[类型扭蛋][单价20] 来设置一个扭蛋机吧！")
+        event.reply("本群似乎还没有设置扭蛋机哦~\n快使用 /设扭蛋机榴歌池[价格20] 来设置一个扭蛋机吧！")
     else:
         msg_list = ["本群扭蛋池如下："]
         for pool in pool_list:
             pool_name = pool[0]
-            pool_type = "蛋池" if pool[1]=="扭蛋" else "卡池"
+            pool_type = "变化" if pool[1]==1 else "固定"
             pool_token = pool[2]
             pool_price = pool[3]
             if pool_token == "积分":
                 pool_token = api.GetGroupDefine(group_id).currency
             msg_list.append("%s %s %i×%s" % (pool_name,pool_type,pool_token,pool_price))
         event.reply("\n".join(msg_list))
+    return
+
+#添加新的扭蛋池
+def set_gashpool(event, get_re):
+    group_id = event.data.group_id
+    pool_name = get_re(1)
+    main_content = get_re.group(2)
+    type_get_re = re.search("\[类型(可变|固定)]", main_content, flags=re.I|re.M)
+    if type_get_re:
+        if "卡" in type_get_re.group(1):
+            pool_type = 1
+        else:
+            pool_type = 0
+    else:
+        pool_type = 0
+    price_get_re = re.search("\[价格?(\d+)\]", main_content, flags=re.I|re.M)
+    if price_get_re:
+        pool_price = price_get_re.group(1)
+    else:
+        event.reply("请记得设置单价哦~\n在参数后带 [价格20] 就可以设置价格为20了哦~")
+        return
+    token_get_re = re.search("\[货?币([^\]]+)\]", main_content, flags=re.I|re.M)
+    if token_get_re:
+        pool_token = token_get_re.group(1)
+    else:
+        pool_token = "积分"
+    gashapon_obj = api.Gashapon(group_id)
+    if not gashapon_obj.get_pool_pro(pool_name):
+        msg_list = ["覆盖原有扭蛋池%s" % pool_name]
+    else:
+        msg_list = ["新增扭蛋池%s" % pool_name]
+    gashapon_obj.add_pool(pool_name, pool_type, pool_token, pool_price)
+    str_type = "可变" if pool_type==0 else "固定"
+    msg_list.append("类型：%s\n代币：%s\n单价：%i" % (str_type,pool_token,pool_price))
+    event.reply("\n".join(msg_list))
+    return
+
+#查扭蛋池内容
+def get_pool_all_item(event, get_re):
     return

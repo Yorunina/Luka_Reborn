@@ -126,11 +126,11 @@ def group_reply(event, Proc):
         return
     get_re = re.match("^查扭蛋池\s*([^\[]*[^\[\s])$", msg, flags=re.I|re.M)
     if get_re:
-        rm.group_bagpack_getall(event, get_re)
+        rm.get_pool_all_item(event, get_re)
         return
     get_re = re.match("^设扭蛋机\s*([^\[]*[^\[\s])\s*(.+)$", msg, flags=re.I|re.M)
     if get_re:
-        rm.group_bagpack_getall(event, get_re)
+        rm.set_gashpool(event, get_re)
         return
     return
 
