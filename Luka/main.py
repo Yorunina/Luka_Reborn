@@ -108,11 +108,11 @@ def group_reply(event, Proc):
     if get_re:
         rm.get_page_goods(event, get_re)
         return
-    get_re = re.match("^购买\s*([^\[]*[^\[\s])\s*(?:\[(\d{1,3})\])?$", msg, flags=re.I|re.M)
+    get_re = re.match("^购买\s*([^\[]*[^\[\s])\s*(\[\d{1,3}\])?$", msg, flags=re.I|re.M)
     if get_re:
         rm.group_store_buy(event, get_re)
         return
-    get_re = re.match("^使用\s*([^\[]*[^\[\s])\s*(?:\[(\d{1,3})\])?$", msg, flags=re.I|re.M)
+    get_re = re.match("^使用\s*([^\[]*[^\[\s])\s*(\[\d{1,3}\])?$", msg, flags=re.I|re.M)
     if get_re:
         rm.group_bagpack_use(event, get_re)
         return
@@ -122,13 +122,13 @@ def group_reply(event, Proc):
         return
     get_re = re.match("^查扭蛋池$", msg, flags=re.I|re.M)
     if get_re:
-        rm.get_all_gashpool(event, get_re)
+        rm.get_all_gashpool(event)
         return
-    get_re = re.match("^查扭蛋池\s*([^\[]*[^\[\s])$", msg, flags=re.I|re.M)
+    get_re = re.match("^查扭蛋池\s*([^\[]*[^\[\s])\s*(\[\d{1,3}\])?$", msg, flags=re.I|re.M)
     if get_re:
         rm.get_pool_all_item(event, get_re)
         return
-    get_re = re.match("^设扭蛋机\s*([^\[]*[^\[\s])\s*(.+)$", msg, flags=re.I|re.M)
+    get_re = re.match("^设扭蛋池\s*([^\[]*[^\[\s])\s*(.+)$", msg, flags=re.I|re.M)
     if get_re:
         rm.set_gashpool(event, get_re)
         return

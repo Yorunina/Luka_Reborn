@@ -343,7 +343,7 @@ class Gashapon(sm.sqliteOperation):
         self.group_id = group_id
         return
     def get_pool_list(self):
-        res = self.get_exec("SELECT Pool,Type,Token,Price FROM GashaponPool WHERE Groupid=?",(self.group_id))
+        res = self.get_exec("SELECT Pool,Type,Token,Price FROM GashaponPool WHERE Groupid=?",(self.group_id,),-1)
         return res
     def get_pool_pro(self, pool):
         res = self.get_exec("SELECT Pool,Type,Token,Price FROM GashaponPool WHERE Groupid=? AND Pool=?",(self.group_id,pool))
@@ -354,7 +354,7 @@ class Gashapon(sm.sqliteOperation):
         return
 
     def get_all_item(self, pool):
-        res = self.get_exec("SELECT Item,Count FROM GashaponItem WHERE Groupid=? AND Pool=?",(self.group_id,pool))
+        res = self.get_exec("SELECT Item,Count FROM GashaponItem WHERE Groupid=? AND Pool=?",(self.group_id,pool),-1)
         return res
     def add_item(self, pool, item, count):
         self.exec("REPLACE INTO GashaponItem (Groupid,Pool,Item,Count)VALUES(?,?,?,?)"
@@ -372,6 +372,6 @@ class Gashapon(sm.sqliteOperation):
         self.exec("DELETE FROM GashaponItem WHERE Groupid=? AND Pool=?",(self.group_id,pool))
         return
     def del_all_pool(self):
-        self.exec("DELETE FROM GashaponPool WHERE Groupid=?",(self.group_id))
-        self.exec("DELETE FROM GashaponItem WHERE Groupid=?",(self.group_id))
+        self.exec("DELETE FROM GashaponPool WHERE Groupid=?",(self.group_id,))
+        self.exec("DELETE FROM GashaponItem WHERE Groupid=?",(self.group_id,))
         return

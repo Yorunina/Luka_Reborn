@@ -10,7 +10,7 @@
 #  `--------`  ``-'`-''   `--'   `'-'    '.(_,_).'  #
 #####################################################
 
-from multiprocessing import pool
+from multiprocessing import Pool, pool
 import Luka.storage_man as sm
 import Luka.api as api
 import random
@@ -301,9 +301,9 @@ def get_all_gashpool(event):
     group_id = event.data.group_id
     pool_list = api.Gashapon(group_id).get_pool_list()
     if not pool_list:
-        event.reply("本群似乎还没有设置扭蛋机哦~\n快使用 /设扭蛋机榴歌池[价格20] 来设置一个扭蛋机吧！")
+        event.reply("本群似乎还没有设置扭蛋池哦~\n快使用 /设扭蛋池榴歌池[价格20] 来设置一个扭蛋机吧！")
     else:
-        msg_list = ["本群扭蛋池如下："]
+        reply_list = ["本群扭蛋池如下："]
         for pool in pool_list:
             pool_name = pool[0]
             pool_type = "变化" if pool[1]==1 else "固定"
@@ -311,18 +311,18 @@ def get_all_gashpool(event):
             pool_price = pool[3]
             if pool_token == "积分":
                 pool_token = api.GetGroupDefine(group_id).currency
-            msg_list.append("%s %s %i×%s" % (pool_name,pool_type,pool_token,pool_price))
-        event.reply("\n".join(msg_list))
+            reply_list.append("%s %s %i×%s" % (pool_name,pool_type,pool_price,pool_token))
+        event.reply("\n".join(reply_list))
     return
 
 #添加新的扭蛋池
 def set_gashpool(event, get_re):
     group_id = event.data.group_id
-    pool_name = get_re(1)
+    pool_name = get_re.group(1)
     main_content = get_re.group(2)
     type_get_re = re.search("\[类型(可变|固定)]", main_content, flags=re.I|re.M)
     if type_get_re:
-        if "卡" in type_get_re.group(1):
+        if type_get_re.group(1) == "固定":
             pool_type = 1
         else:
             pool_type = 0
@@ -330,7 +330,7 @@ def set_gashpool(event, get_re):
         pool_type = 0
     price_get_re = re.search("\[价格?(\d+)\]", main_content, flags=re.I|re.M)
     if price_get_re:
-        pool_price = price_get_re.group(1)
+        pool_price = int(price_get_re.group(1))
     else:
         event.reply("请记得设置单价哦~\n在参数后带 [价格20] 就可以设置价格为20了哦~")
         return
@@ -341,15 +341,51 @@ def set_gashpool(event, get_re):
         pool_token = "积分"
     gashapon_obj = api.Gashapon(group_id)
     if not gashapon_obj.get_pool_pro(pool_name):
-        msg_list = ["覆盖原有扭蛋池%s" % pool_name]
+        reply_list = ["覆盖原有扭蛋池%s" % pool_name]
     else:
-        msg_list = ["新增扭蛋池%s" % pool_name]
+        reply_list = ["新增扭蛋池%s" % pool_name]
     gashapon_obj.add_pool(pool_name, pool_type, pool_token, pool_price)
     str_type = "可变" if pool_type==0 else "固定"
-    msg_list.append("类型：%s\n代币：%s\n单价：%i" % (str_type,pool_token,pool_price))
-    event.reply("\n".join(msg_list))
+    if pool_token == "积分":
+        str_token = api.GetGroupDefine(group_id).currency
+    reply_list.append("类型：%s\n代币：%s\n单价：%i" % (str_type,str_token,pool_price))
+    event.reply("\n".join(reply_list))
     return
 
 #查扭蛋池内容
 def get_pool_all_item(event, get_re):
+    group_id = event.data.group_id
+    gashapon_obj = api.Gashapon(group_id)
+    pool_name = get_re(1)
+    page = int(get_re.group(1)) if get_re.group(1) else 1
+    per_page = 6
+    pool_prop = gashapon_obj.get_pool_pro(pool_name)
+    item_list = gashapon_obj.get_all_item(pool_name)
+    if not pool_prop:
+        event.reply("并不存在你所输入的扭蛋池哦~")
+        return
+    else:
+        if not item_list:
+            event.reply("你所查看的扭蛋池并不存在任何物品哦~")
+            return
+        (pool_name,pool_type,pool_token,pool_price) = pool_prop
+        str_type = "可变" if pool_type==0 else "固定"
+        if pool_token == "积分":
+            str_token = api.GetGroupDefine(group_id).currency
+        reply_list = ["欢迎光临「%s」扭蛋池\n单价：%i × %s | %s\n本扭蛋池的内容如下："
+         % (pool_name,pool_price,str_token,str_type)]
+        item_len = len(item_list)
+        all_page = item_len//per_page + 1
+        if page <= all_page and page >= 1:
+            num = page*per_page - per_page
+            while num <= min(item_len-1, page*page):
+                this_item = item_list[num]
+                item_name = this_item[0]
+                item_count = this_item[1]
+                reply_list.append("%s × %i" % (item_name, item_count))
+                num += 1
+            reply_list.append("当前页数/总页数：%i / %i" % (page, all_page))
+            event.reply("\n".join(reply_list))
+        else:
+            event.reply("请输入一个合法的页数！")
     return
