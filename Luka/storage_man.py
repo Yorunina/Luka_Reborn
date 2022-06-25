@@ -12,7 +12,6 @@
 
 import sqlite3
 import os
-import turtle
 
 class sqliteOperation(object):
     def __init__(self):

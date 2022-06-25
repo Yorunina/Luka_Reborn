@@ -10,7 +10,6 @@
 #  `--------`  ``-'`-''   `--'   `'-'    '.(_,_).'  #
 #####################################################
 
-from multiprocessing import Pool, pool
 import Luka.storage_man as sm
 import Luka.api as api
 import random
@@ -22,8 +21,8 @@ import re
 ############################
 
 #群定义签到货币
-def set_currency(event, get_re):
-    content = get_re.group(1)
+def set_currency(event):
+    content = re.match("^\/定义积分单位\s*#?(.+)$", api.format_msg(event), flags=re.I|re.M).group(1)
     if api.onebot(event).check_permission():
         api.DefineGroup().set_currency(event.data.group_id, content)
         event.reply("修改成功！\n从今天起，本群的积分单位就为「%s」了哦~" % content)
@@ -32,7 +31,8 @@ def set_currency(event, get_re):
     return
 
 #群定义连续签到最大天数
-def set_maxday(event, get_re):
+def set_maxday(event):
+    get_re = re.match("^\/定义连签上限\s*#?(\d+)$", api.format_msg(event), flags=re.I|re.M)
     content = int(get_re.group(1))
     if api.onebot(event).check_permission():
         api.DefineGroup().set_maxday(event.data.group_id, content)
@@ -42,7 +42,8 @@ def set_maxday(event, get_re):
     return
 
 #群定义连续签到加值
-def set_conbonus(event, get_re):
+def set_conbonus(event):
+    get_re = re.match("^\/定义连签加值\s*#?(\d+)$", api.format_msg(event), flags=re.I|re.M)
     content = int(get_re.group(1))
     if api.onebot(event).check_permission():
         api.DefineGroup().set_conbonus(event.data.group_id, content)
@@ -52,7 +53,8 @@ def set_conbonus(event, get_re):
     return
 
 #群定义基础签到加值
-def set_basebonus(event, get_re):
+def set_basebonus(event):
+    get_re = re.match("^\/定义基础加值\s*#?(\d+)$", api.format_msg(event), flags=re.I|re.M)
     content = int(get_re.group(1))
     if api.onebot(event).check_permission():
         api.DefineGroup().set_basebonus(event.data.group_id, content)
@@ -62,7 +64,8 @@ def set_basebonus(event, get_re):
     return
 
 #群入群欢迎
-def set_welcome(event, get_re):
+def set_welcome(event):
+    get_re = re.match("^\/入群欢迎\s*#?(.*)$", api.format_msg(event), flags=re.I|re.M)
     content = get_re.group(1)
     if not content:
         api.DefineGroup().set_welcome(event.data.group_id, 0)
@@ -76,7 +79,8 @@ def set_welcome(event, get_re):
     return
 
 #群离群送别
-def set_welgo(event, get_re):
+def set_welgo(event):
+    get_re = re.match("^\/离群送别\s*#?(.*)$", api.format_msg(event), flags=re.I|re.M)
     content = get_re.group(1)
     if not content:
         api.DefineGroup().set_welcome(event.data.group_id, 0)
@@ -156,22 +160,23 @@ def sign_in(event):
     return
 
 #商品上架
-def goods_on_shelves(event, get_re):
+def goods_on_shelves(event):
+    get_re = re.match("^\/上架\s*#?([^#]+)\s*#(.+)$", api.format_msg(event), flags=re.I|re.M)
     group_id = event.data.group_id
-    displayname = get_re.group(1)
+    displayname = get_re.group(1).rstrip()
     main_content = get_re.group(2)
-    price_get_re = re.search("\[价格?(\d+)\]", main_content, flags=re.I|re.M)
+    price_get_re = re.search("价格?(\d+)", main_content, flags=re.I|re.M)
     if price_get_re:
         price = int(price_get_re.group(1))
     else:
-        event.reply("上架物品必须带有价格哦~\n如/上架测试[价格12]")
+        event.reply("上架物品必须带有价格哦~\n如/上架 测试 #价格12")
         return
-    buylimit_get_re = re.search("\[限购?(\d+)\]", main_content, flags=re.I|re.M)
+    buylimit_get_re = re.search("限购?(\d+)", main_content, flags=re.I|re.M)
     if buylimit_get_re:
         buylimit = int(buylimit_get_re.group(1))
     else:
         buylimit = -1
-    description_get_re = re.search("\[描述?(^\])\]", main_content, flags=re.I|re.M)
+    description_get_re = re.search("描述?([^#]+)", main_content, flags=re.I|re.M)
     if description_get_re:
         description = description_get_re.group(1)
     else:
@@ -183,9 +188,10 @@ def goods_on_shelves(event, get_re):
     return
 
 #商品下架
-def goods_off_shelves(event, get_re):
+def goods_off_shelves(event):
+    get_re = re.match("^\/下架\s*#?([^#]+)$", api.format_msg(event), flags=re.I|re.M)
     group_id = event.data.group_id
-    displayname = get_re.group(1)
+    displayname = get_re.group(1).rstrip()
     if api.DefineGroupStore().del_old_goods(group_id, displayname):
         event.reply("下架成功！\n您成功下架商品[%s]！" % displayname)
     else:
@@ -193,7 +199,8 @@ def goods_off_shelves(event, get_re):
     return
 
 #查看商店
-def get_page_goods(event, get_re):
+def get_page_goods(event):
+    get_re = re.match("^\/商店\s*#?(\d*)$", api.format_msg(event), flags=re.I|re.M)
     per_page = 8
     group_id = event.data.group_id
     page = int(get_re.group(1)) if get_re.group(1) else 1
@@ -222,8 +229,9 @@ def get_page_goods(event, get_re):
     return
 
 #购买
-def group_store_buy(event, get_re):
-    displayname = get_re.group(1)
+def group_store_buy(event):
+    get_re = re.match("^\/购买\s*#?([^#]+)\s*#?(\d{1,3})?$",api.format_msg(event),flags=re.I|re.M)
+    displayname = get_re.group(1).rstrip()
     buytimes = int(get_re.group(2)) if get_re.group(2) else 1
     if buytimes <= 0:
         event.reply("请输入一个合理的数字！")
@@ -256,10 +264,11 @@ def group_store_buy(event, get_re):
         return
 
 #使用道具
-def group_bagpack_use(event, get_re):
+def group_bagpack_use(event):
+    get_re = re.match("^\/使用\s*#?([^#]+)\s*#?(\d{1,3})?$", api.format_msg(event), flags=re.I|re.M)
     group_id = event.data.group_id
     user_id = event.data.user_id
-    item = get_re.group(1)
+    item = get_re.group(1).rstrip()
     usetimes = int(get_re.group(2)) if get_re.group(2) else 1
     item_count = api.IndeBagPack(user_id, group_id).quick_update_operation(item, "[count]-%i"%usetimes)
     if not item_count:
@@ -269,7 +278,8 @@ def group_bagpack_use(event, get_re):
     return
 
 #获取背包中物品
-def group_bagpack_getall(event, get_re):
+def group_bagpack_getall(event):
+    get_re = re.match("^\/背包\s*(\d*)$", api.format_msg(event), flags=re.I|re.M)
     group_id = event.data.group_id
     user_id = event.data.user_id
     page = int(get_re.group(1)) if get_re.group(1) else 1
@@ -306,7 +316,7 @@ def get_all_gashpool(event):
         reply_list = ["本群扭蛋池如下："]
         for pool in pool_list:
             pool_name = pool[0]
-            pool_type = "变化" if pool[1]==1 else "固定"
+            pool_type = "可变" if pool[1]==0 else "固定"
             pool_token = pool[2]
             pool_price = pool[3]
             if pool_token == "积分":
@@ -316,9 +326,10 @@ def get_all_gashpool(event):
     return
 
 #添加新的扭蛋池
-def set_gashpool(event, get_re):
+def set_gashpool(event):
+    get_re = re.match("^\/设扭蛋池\s*#?([^#]+)\s*#(.+)$", api.format_msg(event), flags=re.I|re.M)
     group_id = event.data.group_id
-    pool_name = get_re.group(1)
+    pool_name = get_re.group(1).rstrip()
     main_content = get_re.group(2)
     type_get_re = re.search("\[类型(可变|固定)]", main_content, flags=re.I|re.M)
     if type_get_re:
@@ -353,11 +364,12 @@ def set_gashpool(event, get_re):
     return
 
 #查扭蛋池内容
-def get_pool_all_item(event, get_re):
+def get_pool_all_item(event):
+    get_re = re.match("^\/查扭蛋池\s*#?([^#]+)\s*#?(\d{1,3})?$", api.format_msg(event), flags=re.I|re.M)
     group_id = event.data.group_id
     gashapon_obj = api.Gashapon(group_id)
-    pool_name = get_re(1)
-    page = int(get_re.group(1)) if get_re.group(1) else 1
+    pool_name = get_re.group(1).rstrip()
+    page = int(get_re.group(2)) if get_re.group(2) else 1
     per_page = 6
     pool_prop = gashapon_obj.get_pool_pro(pool_name)
     item_list = gashapon_obj.get_all_item(pool_name)
@@ -388,4 +400,24 @@ def get_pool_all_item(event, get_re):
             event.reply("\n".join(reply_list))
         else:
             event.reply("请输入一个合法的页数！")
+    return
+
+#向扭蛋池中添加物品
+def add_pool_item(event):
+    get_re = re.match("^\/添加?扭蛋\s*#?([^#]+)\s*#([^#]+)\s*#?(\d{1,3})?$", api.format_msg(event), flags=re.I|re.M)
+    group_id = event.data.group_id
+    pool = get_re.group(1).rstrip()
+    item_name = get_re.group(2).rstrip()
+    count = int(get_re.group(3))
+    gashapon_obj = api.Gashapon(group_id)
+    if not gashapon_obj.get_pool_pro(pool):
+        event.reply("似乎并不存在这个扭蛋池哦~\n请使用 /查扭蛋池 来查询可用扭蛋池吧！" + pool)
+        return
+    if gashapon_obj.get_item(pool,item_name):
+        reply_list = ["虽然这个物品似乎以前存在在这里\n但榴歌还是重新帮你上了一次哦~"]
+    else:
+        reply_list = ["添加成功！"]
+    gashapon_obj.add_item(pool,item_name,count)
+    reply_list.append("操作扭蛋池：%s\n操作物品名称：%s\n添加数量：%i"%(pool,item_name,count))
+    event.reply("\n".join(reply_list))
     return

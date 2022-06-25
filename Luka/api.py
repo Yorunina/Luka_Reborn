@@ -13,9 +13,13 @@
 from OlivOS.onebotSDK import event_action as onebotSDK
 import Luka.storage_man as sm
 import time
+import html
 
 def clamp(n, minn, maxn): 
     return max(min(maxn, n), minn)
+
+def format_msg(event):
+    return html.unescape(event.data.message)
 
 class onebot:
     def __init__(self, event):
@@ -355,6 +359,9 @@ class Gashapon(sm.sqliteOperation):
 
     def get_all_item(self, pool):
         res = self.get_exec("SELECT Item,Count FROM GashaponItem WHERE Groupid=? AND Pool=?",(self.group_id,pool),-1)
+        return res
+    def get_item(self, pool, item):
+        res = self.get_exec("SELECT Item,Count FROM GashaponItem WHERE Groupid=? AND Pool=? AND Item=?",(self.group_id,pool,item))
         return res
     def add_item(self, pool, item, count):
         self.exec("REPLACE INTO GashaponItem (Groupid,Pool,Item,Count)VALUES(?,?,?,?)"
